@@ -1,0 +1,2 @@
+defmodule CloudWatch do
+end
