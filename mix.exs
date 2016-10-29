@@ -37,7 +37,8 @@ defmodule CloudWatch.Mixfile do
   defp deps do
     [{:aws, "~> 0.2.0"},
      {:credo, "~> 0.4.13", only: :dev},
-     {:mock, "~> 0.2.0", only: :test}]
+     {:mock, "~> 0.2.0", only: :test},
+     {:ex_doc, ">= 0.0.0", only: :dev}]
   end
 
   defp package do

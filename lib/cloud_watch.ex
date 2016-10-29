@@ -6,11 +6,11 @@ defmodule CloudWatch do
 
   alias CloudWatch.InputLogEvent
 
-  def init(state) do
+  def init(_) do
     {:ok, configure(Application.get_env(:logger, CloudWatch, []))}
   end
 
-  def handle_call({:configure, opts}, state) do
+  def handle_call({:configure, opts}, _) do
     {:ok, :ok, configure(opts)}
   end
 
