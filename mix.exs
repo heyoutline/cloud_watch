@@ -8,7 +8,9 @@ defmodule CloudWatch.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
-     elixirc_paths: elixirc_paths(Mix.env)]
+     elixirc_paths: elixirc_paths(Mix.env),
+     description: "Amazon CloudWatch-logger backend for Elixir",
+     package: package()]
   end
 
   # Configuration for the OTP application
@@ -36,5 +38,12 @@ defmodule CloudWatch.Mixfile do
     [{:aws, "~> 0.2.0"},
      {:credo, "~> 0.4.13", only: :dev},
      {:mock, "~> 0.2.0", only: :test}]
+  end
+
+  defp package do
+    [name: :cloud_watch,
+     maintainers: ["Laurens Boekhorst"],
+     licenses: ["MIT"],
+     links: %{"GitHub" => "https://github.com/lboekhorst/cloud_watch"}]
   end
 end
