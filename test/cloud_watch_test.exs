@@ -1,5 +1,5 @@
 defmodule CloudWatchTest do
-  @backend {CloudWatch, :test}
+  @backend CloudWatch
 
   alias CloudWatch.{Cycler, InputLogEvent}
 

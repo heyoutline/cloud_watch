@@ -7,21 +7,11 @@ defmodule CloudWatch do
   alias CloudWatch.InputLogEvent
 
   def init(state) do
-    {:ok, %{buffer: [], buffer_size: 0, sequence_token: nil}}
+    {:ok, configure(Application.get_env(:logger, CloudWatch, []))}
   end
 
   def handle_call({:configure, opts}, state) do
-    access_key_id = Keyword.get(opts, :access_key_id)
-    endpoint = Keyword.get(opts, :endpoint, @default_endpoint)
-    format = Logger.Formatter.compile(Keyword.get(opts, :format, @default_format))
-    level = Keyword.get(opts, :level)
-    log_group_name = Keyword.get(opts, :log_group_name)
-    log_stream_name = Keyword.get(opts, :log_stream_name)
-    max_buffer_size = Keyword.get(opts, :max_buffer_size, @default_max_buffer_size)
-    region = Keyword.get(opts, :region)
-    secret_access_key = Keyword.get(opts, :secret_access_key)
-    client = %AWS.Client{access_key_id: access_key_id, secret_access_key: secret_access_key, region: region, endpoint: endpoint}
-    {:ok, :ok, Map.merge(state, %{client: client, format: format, level: level, log_group_name: log_group_name, log_stream_name: log_stream_name, max_buffer_size: max_buffer_size})}
+    {:ok, :ok, configure(opts)}
   end
 
   def handle_call(_, state) do
@@ -51,11 +41,34 @@ defmodule CloudWatch do
     {:ok, state}
   end
 
-  def flush(%{buffer: buffer, buffer_size: buffer_size, max_buffer_size: max_buffer_size} = state) when buffer_size < max_buffer_size and length(buffer) < 10_000 do
+  def code_change(_previous_version_number, state, _extra) do
     {:ok, state}
   end
 
-  def flush(state) do
+  def terminate(_reason, _state) do
+    :ok
+  end
+
+  defp configure(opts) do
+    opts = Keyword.merge(Application.get_env(:logger, CloudWatch, []), opts)
+    access_key_id = Keyword.get(opts, :access_key_id)
+    endpoint = Keyword.get(opts, :endpoint, @default_endpoint)
+    format = Logger.Formatter.compile(Keyword.get(opts, :format, @default_format))
+    level = Keyword.get(opts, :level)
+    log_group_name = Keyword.get(opts, :log_group_name)
+    log_stream_name = Keyword.get(opts, :log_stream_name)
+    max_buffer_size = Keyword.get(opts, :max_buffer_size, @default_max_buffer_size)
+    region = Keyword.get(opts, :region)
+    secret_access_key = Keyword.get(opts, :secret_access_key)
+    client = %AWS.Client{access_key_id: access_key_id, secret_access_key: secret_access_key, region: region, endpoint: endpoint}
+    %{buffer: [], buffer_size: 0, client: client, format: format, level: level, log_group_name: log_group_name, log_stream_name: log_stream_name, max_buffer_size: max_buffer_size, sequence_token: nil}
+  end
+
+  defp flush(%{buffer: buffer, buffer_size: buffer_size, max_buffer_size: max_buffer_size} = state) when buffer_size < max_buffer_size and length(buffer) < 10_000 do
+    {:ok, state}
+  end
+
+  defp flush(state) do
     case AWS.Logs.put_log_events(state.client, %{logEvents: state.buffer, logGroupName: state.log_group_name, logStreamName: state.log_stream_name, sequenceToken: state.sequence_token}) do
       {:ok, %{"nextSequenceToken" => next_sequence_token}, _} ->
         {:ok, Map.merge(state, %{buffer: [], buffer_size: 0, sequence_token: next_sequence_token})}
@@ -75,13 +88,5 @@ defmodule CloudWatch do
         AWS.Logs.create_log_stream(state.client, %{logGroupName: state.log_group_name, logStreamName: state.log_stream_name})
         flush(state)
     end
-  end
-
-  def code_change(_previous_version_number, state, _extra) do
-    {:ok, state}
-  end
-
-  def terminate(_reason, _state) do
-    :ok
   end
 end

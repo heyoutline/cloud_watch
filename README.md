@@ -27,13 +27,13 @@ Add the backend to `config.exs`:
 
   ```elixir
   config :logger,
-    backends: [{CloudWatch, :cloud_watch}]
+    backends: [:console, CloudWatch]
   ```
 
 Configure the following example to suit your needs:
 
   ```elixir
-  config :logger, :cloud_watch,
+  config :logger, CloudWatch,
     access_key_id: "AKIAIOSFODNN7EXAMPLE",
     secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
     region: "eu-west-1",
