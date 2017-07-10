@@ -9,7 +9,7 @@ Add `cloud_watch` to your list of dependencies in `mix.exs`:
 
   ```elixir
   def deps do
-    [{:cloud_watch, "~> 0.1.0"}]
+    [{:cloud_watch, "~> 0.2.1"}]
   end
   ```
 

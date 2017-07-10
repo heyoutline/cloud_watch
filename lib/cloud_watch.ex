@@ -2,6 +2,7 @@ defmodule CloudWatch do
   @behaviour :gen_event
   @default_endpoint "amazonaws.com"
   @default_format "$metadata[$level] $message\n"
+  @default_level :info
   @default_max_buffer_size 10_485
 
   alias CloudWatch.InputLogEvent
@@ -54,7 +55,7 @@ defmodule CloudWatch do
     access_key_id = Keyword.get(opts, :access_key_id)
     endpoint = Keyword.get(opts, :endpoint, @default_endpoint)
     format = Logger.Formatter.compile(Keyword.get(opts, :format, @default_format))
-    level = Keyword.get(opts, :level)
+    level = Keyword.get(opts, :level, @default_level)
     log_group_name = Keyword.get(opts, :log_group_name)
     log_stream_name = Keyword.get(opts, :log_stream_name)
     max_buffer_size = Keyword.get(opts, :max_buffer_size, @default_max_buffer_size)

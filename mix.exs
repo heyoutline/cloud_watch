@@ -3,7 +3,7 @@ defmodule CloudWatch.Mixfile do
 
   def project do
     [app: :cloud_watch,
-     version: "0.2.0",
+     version: "0.2.1",
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
