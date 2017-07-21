@@ -70,24 +70,25 @@ defmodule CloudWatch do
   end
 
   defp flush(state) do
-    case AWS.Logs.put_log_events(state.client, %{logEvents: state.buffer, logGroupName: state.log_group_name, logStreamName: state.log_stream_name, sequenceToken: state.sequence_token}) do
-      {:ok, %{"nextSequenceToken" => next_sequence_token}, _} ->
-        {:ok, Map.merge(state, %{buffer: [], buffer_size: 0, sequence_token: next_sequence_token})}
-      {:error, {"DataAlreadyAcceptedException", "The given batch of log events has already been accepted. The next batch can be sent with sequenceToken: " <> next_sequence_token}} ->
-        state
-        |> Map.put(:sequence_token, next_sequence_token)
-        |> flush()
-      {:error, {"InvalidSequenceTokenException", "The given sequenceToken is invalid. The next expected sequenceToken is: " <> next_sequence_token}} ->
-        state
-        |> Map.put(:sequence_token, next_sequence_token)
-        |> flush()
-      {:error, {"ResourceNotFoundException", "The specified log group does not exist."}} ->
-        AWS.Logs.create_log_group(state.client, %{logGroupName: state.log_group_name})
-        AWS.Logs.create_log_stream(state.client, %{logGroupName: state.log_group_name, logStreamName: state.log_stream_name})
-        flush(state)
-      {:error, {"ResourceNotFoundException", "The specified log stream does not exist."}} ->
-        AWS.Logs.create_log_stream(state.client, %{logGroupName: state.log_group_name, logStreamName: state.log_stream_name})
-        flush(state)
+    case AWS.Logs.put_log_events(state.client, %{logEvents: Enum.sort_by(state.buffer, &(&1.timestamp)),
+      logGroupName: state.log_group_name, logStreamName: state.log_stream_name, sequenceToken: state.sequence_token}) do
+        {:ok, %{"nextSequenceToken" => next_sequence_token}, _} ->
+          {:ok, Map.merge(state, %{buffer: [], buffer_size: 0, sequence_token: next_sequence_token})}
+        {:error, {"DataAlreadyAcceptedException", "The given batch of log events has already been accepted. The next batch can be sent with sequenceToken: " <> next_sequence_token}} ->
+          state
+          |> Map.put(:sequence_token, next_sequence_token)
+          |> flush()
+        {:error, {"InvalidSequenceTokenException", "The given sequenceToken is invalid. The next expected sequenceToken is: " <> next_sequence_token}} ->
+          state
+          |> Map.put(:sequence_token, next_sequence_token)
+          |> flush()
+        {:error, {"ResourceNotFoundException", "The specified log group does not exist."}} ->
+          AWS.Logs.create_log_group(state.client, %{logGroupName: state.log_group_name})
+          AWS.Logs.create_log_stream(state.client, %{logGroupName: state.log_group_name, logStreamName: state.log_stream_name})
+          flush(state)
+        {:error, {"ResourceNotFoundException", "The specified log stream does not exist."}} ->
+          AWS.Logs.create_log_stream(state.client, %{logGroupName: state.log_group_name, logStreamName: state.log_stream_name})
+          flush(state)
     end
   end
 end
