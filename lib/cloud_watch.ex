@@ -89,6 +89,9 @@ defmodule CloudWatch do
         {:error, {"ResourceNotFoundException", "The specified log stream does not exist."}} ->
           AWS.Logs.create_log_stream(state.client, %{logGroupName: state.log_group_name, logStreamName: state.log_stream_name})
           flush(state)
+        {:error, %HTTPoison.Error{id: nil, reason: :closed}} ->
+          state
+          |> flush()
     end
   end
 end
