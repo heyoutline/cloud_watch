@@ -4,11 +4,14 @@ defmodule CloudWatch do
   @default_format "$metadata[$level] $message\n"
   @default_level :info
   @default_max_buffer_size 10_485
+  @default_max_timeout 60_000
 
   alias CloudWatch.InputLogEvent
 
   def init(_) do
-    {:ok, configure(Application.get_env(:logger, CloudWatch, []))}
+    state = configure(Application.get_env(:logger, CloudWatch, []))
+    Process.send_after(self(), :flush, state.max_timeout)
+    {:ok, state}
   end
 
   def handle_call({:configure, opts}, _) do
@@ -38,7 +41,13 @@ defmodule CloudWatch do
     {:ok, Map.merge(state, %{buffer: [], buffer_size: 0})}
   end
 
-  def handle_info(_, state) do
+  def handle_info(:flush, state) do
+    flush(state, force: true)
+    Process.send_after(self(), :flush, state.max_timeout)
+    {:ok, state}
+  end
+
+  def handle_info(_msg, state) do
     {:ok, state}
   end
 
@@ -59,17 +68,24 @@ defmodule CloudWatch do
     log_group_name = Keyword.get(opts, :log_group_name)
     log_stream_name = Keyword.get(opts, :log_stream_name)
     max_buffer_size = Keyword.get(opts, :max_buffer_size, @default_max_buffer_size)
+    max_timeout = Keyword.get(opts, :max_timeout, @default_max_timeout)
     region = Keyword.get(opts, :region)
     secret_access_key = Keyword.get(opts, :secret_access_key)
-    client = %AWS.Client{access_key_id: access_key_id, secret_access_key: secret_access_key, region: region, endpoint: endpoint}
-    %{buffer: [], buffer_size: 0, client: client, format: format, level: level, log_group_name: log_group_name, log_stream_name: log_stream_name, max_buffer_size: max_buffer_size, sequence_token: nil}
+    client = %AWS.Client{access_key_id: access_key_id, secret_access_key: secret_access_key, region: region,
+      endpoint: endpoint}
+    %{buffer: [], buffer_size: 0, client: client, format: format, level: level, log_group_name: log_group_name,
+      log_stream_name: log_stream_name, max_buffer_size: max_buffer_size, max_timeout: max_timeout,
+      sequence_token: nil, flushed_at: nil}
   end
 
-  defp flush(%{buffer: buffer, buffer_size: buffer_size, max_buffer_size: max_buffer_size} = state) when buffer_size < max_buffer_size and length(buffer) < 10_000 do
-    {:ok, state}
+  defp flush(_state, _opts \\ [force: false])
+
+  defp flush(%{buffer: buffer, buffer_size: buffer_size, max_buffer_size: max_buffer_size} = state, [force: false])
+    when buffer_size < max_buffer_size and length(buffer) < 10_000 do
+      {:ok, state}
   end
 
-  defp flush(state) do
+  defp flush(state, opts) do
     case AWS.Logs.put_log_events(state.client, %{logEvents: Enum.sort_by(state.buffer, &(&1.timestamp)),
       logGroupName: state.log_group_name, logStreamName: state.log_stream_name, sequenceToken: state.sequence_token}) do
         {:ok, %{"nextSequenceToken" => next_sequence_token}, _} ->
@@ -77,21 +93,23 @@ defmodule CloudWatch do
         {:error, {"DataAlreadyAcceptedException", "The given batch of log events has already been accepted. The next batch can be sent with sequenceToken: " <> next_sequence_token}} ->
           state
           |> Map.put(:sequence_token, next_sequence_token)
-          |> flush()
+          |> flush(opts)
         {:error, {"InvalidSequenceTokenException", "The given sequenceToken is invalid. The next expected sequenceToken is: " <> next_sequence_token}} ->
           state
           |> Map.put(:sequence_token, next_sequence_token)
-          |> flush()
+          |> flush(opts)
         {:error, {"ResourceNotFoundException", "The specified log group does not exist."}} ->
           AWS.Logs.create_log_group(state.client, %{logGroupName: state.log_group_name})
-          AWS.Logs.create_log_stream(state.client, %{logGroupName: state.log_group_name, logStreamName: state.log_stream_name})
-          flush(state)
+          AWS.Logs.create_log_stream(state.client, %{logGroupName: state.log_group_name,
+            logStreamName: state.log_stream_name})
+          flush(state, opts)
         {:error, {"ResourceNotFoundException", "The specified log stream does not exist."}} ->
-          AWS.Logs.create_log_stream(state.client, %{logGroupName: state.log_group_name, logStreamName: state.log_stream_name})
-          flush(state)
-        {:error, %HTTPoison.Error{id: nil, reason: :closed}} ->
+          AWS.Logs.create_log_stream(state.client, %{logGroupName: state.log_group_name,
+            logStreamName: state.log_stream_name})
+          flush(state, opts)
+        {:error, %HTTPoison.Error{id: nil, reason: reason}} when reason in [:closed, :connect_timeout, :timeout] ->
           state
-          |> flush()
+          |> flush(opts)
     end
   end
 end
