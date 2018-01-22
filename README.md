@@ -40,7 +40,7 @@ Configure the following example to suit your needs:
     endpoint: "amazonaws.com",
     log_group_name: "api",
     log_stream_name: "production",
-    max_buffer_size: 10_485
+    max_buffer_size: 10_485,
     max_timeout: 60_000
   ```
 
