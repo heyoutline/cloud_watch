@@ -42,9 +42,9 @@ defmodule CloudWatch do
   end
 
   def handle_info(:flush, state) do
-    flush(state, force: true)
+    {:ok, flushed_state} = flush(state, force: true)
     Process.send_after(self(), :flush, state.max_timeout)
-    {:ok, state}
+    {:ok, flushed_state}
   end
 
   def handle_info(_msg, state) do
@@ -84,6 +84,8 @@ defmodule CloudWatch do
     when buffer_size < max_buffer_size and length(buffer) < 10_000 do
       {:ok, state}
   end
+  
+  defp flush(%{buffer: []} = state, _opts), do: {:ok, state}  
 
   defp flush(state, opts) do
     case AWS.Logs.put_log_events(state.client, %{logEvents: Enum.sort_by(state.buffer, &(&1.timestamp)),
