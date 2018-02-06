@@ -9,7 +9,7 @@ Add `cloud_watch` to your list of dependencies in `mix.exs`:
 
   ```elixir
   def deps do
-    [{:cloud_watch, "~> 0.2.5"}]
+    [{:cloud_watch, "~> 0.2.6"}]
   end
   ```
 
@@ -27,7 +27,8 @@ Add the backend to `config.exs`:
 
   ```elixir
   config :logger,
-    backends: [:console, CloudWatch]
+    backends: [:console, CloudWatch],
+    utc_log: true
   ```
 
 Configure the following example to suit your needs:
