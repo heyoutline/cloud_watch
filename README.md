@@ -5,11 +5,12 @@ CloudWatch.
 
 ## Installation
 
-Add `cloud_watch` to your list of dependencies in `mix.exs`:
+Add `cloud_watch` and `aws` to your list of dependencies in `mix.exs`:
 
   ```elixir
   def deps do
-    [{:cloud_watch, "~> 0.2.6"}]
+    [{:cloud_watch, "~> 0.2.7"},
+    {:aws, "~> 0.5.0"}]
   end
   ```
 
@@ -49,3 +50,24 @@ The `endpoint` may be omitted from the configuration and will default to
 `amazonaws.com`. The `max_buffer_size` controls when `cloud_watch` will flush
 the buffer in bytes. You may specify anything up to a maximum of 1,048,576
 bytes. If omitted, it will default to 10,485 bytes.
+
+## Alternative AWS client library: ExAws
+
+Default installation instructions assume that the [AWS](https://github.com/jkakar/aws-elixir) Elixir library will be used. If you have to (or prefer to) use [ExAws](https://github.com/ex-aws/ex_aws) instead, solution is really simple:
+Replace `aws` with `ex-aws` in your list of dependencies in `mix.exs`:
+
+  ```elixir
+  def deps do
+    [{:cloud_watch, "~> 0.2.7"},
+    {:ex_aws, "~> 2.0"}]
+  end
+  ```
+
+CloudWatch switches to ExAws automagically based on its presence at compile time. Just make sure that `aws` is not added as a dependency of another application in an umbrella project.
+
+
+Note that `ExAws` resolves AWS credentials through its own configuration. As a consequence, following keys in CloudWatch configuration are not used:
+- `access_key_id`
+- `secret_access_key`
+- `region`
+- `endpoint`
