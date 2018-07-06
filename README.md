@@ -71,3 +71,40 @@ Note that `ExAws` resolves AWS credentials through its own configuration. As a c
 - `secret_access_key`
 - `region`
 - `endpoint`
+
+### ExAws requires valid AWS keys in order to work properly
+This statement seems obvious, but it may be useful to understand
+how the system behaves when the configuration is not right:
+
+Logger uses a build-in supervisor that is well capable of handling most problems.
+For example, network connection issues or invalid AWS keys seems to be treated well,
+with meaningful messages logged to other backend (console or file).
+If the error is transient, messages are sent to CloudWatch logs after recovery.
+
+When ExAws cannot find the AWS secret key through the credential resolution process
+(see ExAws documentation for details), the initial error message makes sense:
+```
+** (EXIT) an exception was raised:
+           ** (RuntimeError) Instance Meta Error: {:error, %{reason: :connect_timeout}}
+
+   You tried to access the AWS EC2 instance meta, but it could not be reached.
+   This happens most often when trying to access it from your local computer,
+   which happens when environment variables are not set correctly prompting
+   ExAws to fallback to the Instance Meta.
+
+   Please check your key config and make sure they're configured correctly
+```
+However, you'll experience a flood of errors and sasl reports,
+as both Logger and ExAws supervisors are busy restarting children over and over.
+Finding the root cause is a challenge, as the subsequent error messages are misleading:
+":ehostdown", "argument error", ":badarg, {:ets, :lookup}".
+
+Missing AWS keys is a permanent error (unless the keys can magically show up in your app),
+hence should be caught early during deployment.
+Our advice is to add an AWS call to the application start logic.
+This can be an application specific request (especially when the application talks
+to AWS for other services), or just a dummy AWS call.
+Alternatively, the ExAws configuration can be tested without calling AWS, e.g.
+```elixir
+ExAws.Auth.validate_config(ExAws.Config.new(:logs, []))
+```
