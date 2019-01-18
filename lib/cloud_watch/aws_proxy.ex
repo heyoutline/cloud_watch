@@ -64,6 +64,8 @@ defmodule CloudWatch.AwsProxy do
             {:ok, response_body, response_body}
           {:error, {:http_error, _error_code, %{"__type" => type, "message" => message}}} ->
             {:error, {type, message}}
+          {:error, {type, message}} ->
+            {:error, {type, message}}
         end
       end
 
