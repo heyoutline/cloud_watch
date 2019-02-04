@@ -114,6 +114,8 @@ defmodule CloudWatch do
         {:error, %HTTPoison.Error{id: nil, reason: reason}} when reason in [:closed, :connect_timeout, :timeout] ->
           state
           |> flush(opts)
+        {:error, {type, _message}} when type in [:closed, :connect_timeout, :timeout] ->
+          flush(state, opts)
     end
   end
 end
