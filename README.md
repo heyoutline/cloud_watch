@@ -51,6 +51,23 @@ The `endpoint` may be omitted from the configuration and will default to
 the buffer in bytes. You may specify anything up to a maximum of 1,048,576
 bytes. If omitted, it will default to 10,485 bytes.
 
+### Dynamic log stream names
+Some applications need more flexibility in `log_stream_name`, incl. ability to change the name dynamically (e.g. every day or every hour).\
+If you configure log_stream_name as a tuple `{module, function, args}` (MFA), then the function will be invoked and its return value used as the stream name.
+
+Similar configuration can be used for `log_group_name` as well. \
+For example:
+  ```elixir
+  config :logger, CloudWatch,
+    log_group_name: {MyDynamicNaming, :append_node_name, ["/aws/ec2/my-app-logs/"]},
+    log_stream_name: {MyDynamicNaming, :get_log_stream_name_change_every_day, []}
+
+  defmodule MyDynamicNaming do
+    def append_node_name(value), do: "#{value}#{node()}"
+    def get_log_stream_name_change_every_day(), do: "#{Date.utc_today()}/my-log-stream"
+  end
+```
+
 ## Alternative AWS client library: ExAws
 
 Default installation instructions assume that the [AWS](https://github.com/jkakar/aws-elixir) Elixir library will be used. If you have to (or prefer to) use [ExAws](https://github.com/ex-aws/ex_aws) instead, solution is really simple:

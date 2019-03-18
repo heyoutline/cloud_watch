@@ -90,32 +90,50 @@ defmodule CloudWatch do
   defp flush(%{buffer: []} = state, _opts), do: {:ok, state}  
 
   defp flush(state, opts) do
+    # Log names could change between calls, but has to remain stable inside the method `do_flush/4`
+    log_group_name = resolve_name(state.log_group_name)
+    log_stream_name = resolve_name(state.log_stream_name)
+    do_flush(state, opts, log_group_name, log_stream_name)
+  end
+
+  defp do_flush(state, opts, log_group_name, log_stream_name) do
     case AwsProxy.put_log_events(state.client, %{logEvents: Enum.sort_by(state.buffer, &(&1.timestamp)),
-      logGroupName: state.log_group_name, logStreamName: state.log_stream_name, sequenceToken: state.sequence_token}) do
+      logGroupName: log_group_name, logStreamName: log_stream_name, sequenceToken: state.sequence_token}) do
         {:ok, %{"nextSequenceToken" => next_sequence_token}, _} ->
           {:ok, Map.merge(state, %{buffer: [], buffer_size: 0, sequence_token: next_sequence_token})}
         {:error, {"DataAlreadyAcceptedException", "The given batch of log events has already been accepted. The next batch can be sent with sequenceToken: " <> next_sequence_token}} ->
           state
           |> Map.put(:sequence_token, next_sequence_token)
-          |> flush(opts)
+          |> do_flush(opts, log_group_name, log_stream_name)
         {:error, {"InvalidSequenceTokenException", "The given sequenceToken is invalid. The next expected sequenceToken is: " <> next_sequence_token}} ->
           state
           |> Map.put(:sequence_token, next_sequence_token)
-          |> flush(opts)
+          |> do_flush(opts, log_group_name, log_stream_name)
         {:error, {"ResourceNotFoundException", "The specified log group does not exist."}} ->
-          AwsProxy.create_log_group(state.client, %{logGroupName: state.log_group_name})
-          AwsProxy.create_log_stream(state.client, %{logGroupName: state.log_group_name,
-            logStreamName: state.log_stream_name})
-          flush(state, opts)
-        {:error, {"ResourceNotFoundException", "The specified log stream does not exist."}} ->
-          AwsProxy.create_log_stream(state.client, %{logGroupName: state.log_group_name,
-            logStreamName: state.log_stream_name})
-          flush(state, opts)
-        {:error, %HTTPoison.Error{id: nil, reason: reason}} when reason in [:closed, :connect_timeout, :timeout] ->
+          AwsProxy.create_log_group(state.client, %{logGroupName: log_group_name})
+          AwsProxy.create_log_stream(state.client, %{logGroupName: log_group_name, logStreamName: log_stream_name})
           state
-          |> flush(opts)
+          |> Map.put(:sequence_token, nil)
+          |> do_flush(opts, log_group_name, log_stream_name)
+        {:error, {"ResourceNotFoundException", "The specified log stream does not exist."}} ->
+          AwsProxy.create_log_stream(state.client, %{logGroupName: log_group_name, logStreamName: log_stream_name})
+          state
+          |> Map.put(:sequence_token, nil)
+          |> do_flush(opts, log_group_name, log_stream_name)
+        {:error, %HTTPoison.Error{id: nil, reason: reason}} when reason in [:closed, :connect_timeout, :timeout] ->
+          do_flush(state, opts, log_group_name, log_stream_name)
         {:error, {type, _message}} when type in [:closed, :connect_timeout, :timeout] ->
-          flush(state, opts)
+          do_flush(state, opts, log_group_name, log_stream_name)
     end
   end
+
+  # Apply a MFA tuple (Module, Function, Attributes) to obtain the name. Function must return a string
+  defp resolve_name({m, f, a}) do
+    :erlang.apply(m, f, a)
+  end
+  # Use the name directly
+  defp resolve_name(name) do
+    name
+  end
+
 end
