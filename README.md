@@ -9,7 +9,7 @@ Add `cloud_watch` and `aws` to your list of dependencies in `mix.exs`:
 
   ```elixir
   def deps do
-    [{:cloud_watch, "~> 0.3.1"},
+    [{:cloud_watch, "~> 0.3.2"},
      {:aws, "~> 0.5.0"}]
   end
   ```
@@ -50,6 +50,23 @@ The `endpoint` may be omitted from the configuration and will default to
 `amazonaws.com`. The `max_buffer_size` controls when `cloud_watch` will flush
 the buffer in bytes. You may specify anything up to a maximum of 1,048,576
 bytes. If omitted, it will default to 10,485 bytes.
+
+### Dynamic log stream names
+Some applications need more flexibility in `log_stream_name`, incl. ability to change the name dynamically (e.g. every day or every hour).\
+If you configure log_stream_name as a tuple `{module, function, args}` (MFA), then the function will be invoked and its return value used as the stream name.
+
+Similar configuration can be used for `log_group_name` as well. \
+For example:
+  ```elixir
+  config :logger, CloudWatch,
+    log_group_name: {MyDynamicNaming, :append_node_name, ["/aws/ec2/my-app-logs/"]},
+    log_stream_name: {MyDynamicNaming, :get_log_stream_name_change_every_day, []}
+
+  defmodule MyDynamicNaming do
+    def append_node_name(value), do: "#{value}#{node()}"
+    def get_log_stream_name_change_every_day(), do: "#{Date.utc_today()}/my-log-stream"
+  end
+```
 
 ## Alternative AWS client library: ExAws
 
