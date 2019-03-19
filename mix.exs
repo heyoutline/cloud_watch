@@ -44,7 +44,7 @@ defmodule CloudWatch.Mixfile do
 
   defp package do
     [name: :cloud_watch,
-     maintainers: ["Laurens Boekhorst"],
+     maintainers: ["Laurens Boekhorst", "Peter Menhart"],
      licenses: ["MIT"],
      links: %{"GitHub" => "https://github.com/lboekhorst/cloud_watch"}]
   end
