@@ -43,13 +43,40 @@ Configure the following example to suit your needs:
     log_group_name: "api",
     log_stream_name: "production",
     max_buffer_size: 10_485,
-    max_timeout: 60_000
+    max_timeout: 60_000,
+    metadata: [:m1, :m2],
+    metadata_filter: [module: MyModule]
+  ```
+
+Multiple `CloudWatch` backends can be specified by adding tuples in the
+format `{CloudWatch, :backend_name}`:
+
+  ```elixir
+  config :logger,
+    utc_log: true,
+    backends: [
+      :console,
+      {CloudWatch, :cloud_error},
+      {CloudWatch, :cloud_debug}
+    ]
+
+  config :logger, cloud_error,
+    level: :error
+    # other options
+
+  config :logger, cloud_debug,
+    level: :debug
+    # other options
   ```
 
 The `endpoint` may be omitted from the configuration and will default to
 `amazonaws.com`. The `max_buffer_size` controls when `cloud_watch` will flush
 the buffer in bytes. You may specify anything up to a maximum of 1,048,576
 bytes. If omitted, it will default to 10,485 bytes.
+
+The `metadata` parameter selects which metadata should be printed with the
+log message. The `metadata_filter` specifies instead metadata terms which must
+be present in order to log.
 
 ### Dynamic log stream names
 Some applications need more flexibility in `log_stream_name`, incl. ability to change the name dynamically (e.g. every day or every hour).\
