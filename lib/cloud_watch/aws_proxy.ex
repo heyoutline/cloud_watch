@@ -12,7 +12,12 @@ defmodule CloudWatch.AwsProxy do
       #
       # AWS credentials are configured in CloudWatch
       def client(access_key_id, secret_access_key, region, endpoint) do
-        %AWS.Client{access_key_id: access_key_id, secret_access_key: secret_access_key, region: region, endpoint: endpoint}
+        %AWS.Client{
+          access_key_id: access_key_id,
+          secret_access_key: secret_access_key,
+          region: region,
+          endpoint: endpoint
+        }
       end
 
       def create_log_group(client, input) do
@@ -33,7 +38,8 @@ defmodule CloudWatch.AwsProxy do
       #
       # AWS credentials are configured in ExAws (shared with other AWS clients)
       def client(_access_key_id, _secret_access_key, _region, _endpoint) do
-        %{} # nothing, we rely on config :ex_aws
+        # nothing, we rely on config :ex_aws
+        %{}
       end
 
       def create_log_group(_client, input) do
@@ -58,12 +64,15 @@ defmodule CloudWatch.AwsProxy do
           ],
           data: data
         }
+
         case ExAws.request(op) do
           #      {:ok, {:ok, 200, response_body}} ->
           {:ok, response_body} ->
             {:ok, response_body, response_body}
+
           {:error, {:http_error, _error_code, %{"__type" => type, "message" => message}}} ->
             {:error, {type, message}}
+
           {:error, {type, message}} ->
             {:error, {type, message}}
         end
@@ -87,5 +96,4 @@ defmodule CloudWatch.AwsProxy do
         raise ":aws or :ex_aws must be added as a dependency to use this module"
       end
   end
-
 end

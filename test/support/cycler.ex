@@ -8,6 +8,8 @@ defmodule CloudWatch.Cycler do
   end
 
   def next_response do
-    Agent.get_and_update(__MODULE__, fn (state) -> {Enum.at(state.responses, state.index), Map.merge(state, %{index: state.index + 1})} end)
+    Agent.get_and_update(__MODULE__, fn state ->
+      {Enum.at(state.responses, state.index), Map.merge(state, %{index: state.index + 1})}
+    end)
   end
 end

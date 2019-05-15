@@ -2,15 +2,17 @@ defmodule CloudWatch.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :cloud_watch,
-     version: "0.3.2",
-     elixir: "~> 1.5",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     deps: deps(),
-     elixirc_paths: elixirc_paths(Mix.env),
-     description: "Amazon CloudWatch-logger backend for Elixir",
-     package: package()]
+    [
+      app: :cloud_watch,
+      version: "0.3.2",
+      elixir: "~> 1.5",
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env()),
+      description: "Amazon CloudWatch-logger backend for Elixir",
+      package: package()
+    ]
   end
 
   # Configuration for the OTP application
@@ -35,17 +37,21 @@ defmodule CloudWatch.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:aws, "~> 0.5.0", optional: true},
-     {:httpoison, "~> 0.11.1"},
-     {:credo, "~> 0.4.13", only: :dev},
-     {:mock, "~> 0.3.2", only: :test},
-     {:ex_doc, ">= 0.0.0", only: :dev}]
+    [
+      {:aws, "~> 0.5.0", optional: true},
+      {:httpoison, "~> 0.11.1"},
+      {:credo, "~> 0.4.13", only: :dev},
+      {:mock, "~> 0.3.2", only: :test},
+      {:ex_doc, ">= 0.0.0", only: :dev}
+    ]
   end
 
   defp package do
-    [name: :cloud_watch,
-     maintainers: ["Laurens Boekhorst", "Peter Menhart"],
-     licenses: ["MIT"],
-     links: %{"GitHub" => "https://github.com/lboekhorst/cloud_watch"}]
+    [
+      name: :cloud_watch,
+      maintainers: ["Laurens Boekhorst", "Peter Menhart"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/lboekhorst/cloud_watch"}
+    ]
   end
 end
