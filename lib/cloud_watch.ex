@@ -226,6 +226,9 @@ defmodule CloudWatch do
         |> Map.put(:sequence_token, nil)
         |> do_flush(opts, log_group_name, log_stream_name)
 
+      {:error, {"ThrottlingException", "Rate exceeded"}} ->
+        do_flush(state, opts, log_group_name, log_stream_name)
+
       {:error, %HTTPoison.Error{id: nil, reason: reason}}
       when reason in [:closed, :connect_timeout, :timeout] ->
         do_flush(state, opts, log_group_name, log_stream_name)
