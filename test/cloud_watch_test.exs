@@ -1,7 +1,7 @@
 defmodule CloudWatchTest do
   @backend CloudWatch
 
-  alias CloudWatch.{Cycler, InputLogEvent}
+  alias CloudWatch.Cycler
 
   import Mock
 
@@ -49,7 +49,7 @@ defmodule CloudWatchTest do
 
       assert called(
                AWS.Logs.put_log_events(:_, %{
-                 logEvents: [%InputLogEvent{message: "ArithmeticError", timestamp: :_}],
+                 logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
                  sequenceToken: :_
@@ -81,7 +81,7 @@ defmodule CloudWatchTest do
 
       assert called(
                AWS.Logs.put_log_events(:_, %{
-                 logEvents: [%InputLogEvent{message: "ArithmeticError", timestamp: :_}],
+                 logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
                  sequenceToken: :_
@@ -116,7 +116,7 @@ defmodule CloudWatchTest do
 
       assert called(
                AWS.Logs.put_log_events(:_, %{
-                 logEvents: [%InputLogEvent{message: "ArgumentError", timestamp: :_}],
+                 logEvents: [%{message: "ArgumentError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
                  sequenceToken: :_
@@ -133,7 +133,7 @@ defmodule CloudWatchTest do
 
       assert called(
                AWS.Logs.put_log_events(:_, %{
-                 logEvents: [%InputLogEvent{message: "ArithmeticError", timestamp: :_}],
+                 logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
                  sequenceToken: :_
@@ -156,7 +156,7 @@ defmodule CloudWatchTest do
 
       assert called(
                AWS.Logs.put_log_events(:_, %{
-                 logEvents: [%InputLogEvent{message: "ArithmeticError", timestamp: :_}],
+                 logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
                  sequenceToken: "5768239465"
@@ -179,7 +179,7 @@ defmodule CloudWatchTest do
 
       assert called(
                AWS.Logs.put_log_events(:_, %{
-                 logEvents: [%InputLogEvent{message: "ArithmeticError", timestamp: :_}],
+                 logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
                  sequenceToken: "5768239463"

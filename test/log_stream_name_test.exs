@@ -3,7 +3,7 @@ defmodule LogStreamNameTest do
   @stream_name_prefix "2018-01-01"
   @stream_name_postfix "test1234"
 
-  alias CloudWatch.{Cycler, InputLogEvent}
+  alias CloudWatch.Cycler
 
   import Mock
 
@@ -53,7 +53,7 @@ defmodule LogStreamNameTest do
 
       assert called(
                AWS.Logs.put_log_events(:_, %{
-                 logEvents: [%InputLogEvent{message: "ArithmeticError", timestamp: :_}],
+                 logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: log_stream_name,
                  sequenceToken: :_
@@ -87,7 +87,7 @@ defmodule LogStreamNameTest do
 
       assert called(
                AWS.Logs.put_log_events(:_, %{
-                 logEvents: [%InputLogEvent{message: "ArithmeticError", timestamp: :_}],
+                 logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: log_stream_name,
                  sequenceToken: :_

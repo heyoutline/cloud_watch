@@ -7,7 +7,7 @@ defmodule CloudWatch do
   @default_max_timeout 60_000
   @max_buffer_size 10_000
 
-  alias CloudWatch.InputLogEvent
+  alias CloudWatch.Utils
   alias CloudWatch.AwsProxy
 
   def init({__MODULE__, name}) do
@@ -121,7 +121,7 @@ defmodule CloudWatch do
       |> IO.chardata_to_string()
 
     # buffer order is not relevant, we'll reverse or sort later if needed
-    buffer = [%InputLogEvent{message: message, timestamp: ts} | buffer]
+    buffer = [%{message: message, timestamp: Utils.convert_timestamp(ts)} | buffer]
 
     %{
       state
