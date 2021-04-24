@@ -9,8 +9,8 @@ Add `cloud_watch` and `aws` to your list of dependencies in `mix.exs`:
 
   ```elixir
   def deps do
-    [{:cloud_watch, "~> 0.3.2"},
-     {:aws, "~> 0.5.0"}]
+    [{:cloud_watch, "~> 0.4.0"},
+     {:aws, "~> 0.6.0"}]
   end
   ```
 
@@ -102,8 +102,8 @@ Replace `aws` with `ex-aws` in your list of dependencies in `mix.exs`:
 
   ```elixir
   def deps do
-    [{:cloud_watch, "~> 0.2.8"},
-    {:ex_aws, "~> 2.0"}]
+    [{:cloud_watch, "~> 0.4.0"},
+    {:ex_aws, "~> 2.2"}]
   end
   ```
 

@@ -23,6 +23,17 @@ defmodule LogStreamNameTest do
         log_stream_name: {LogStreamNameTest, :format_name, [@stream_name_prefix, @stream_name_postfix]},
         max_buffer_size: 39
       )
+
+    log_module =
+      if Code.ensure_loaded?(AWS.Logs) do
+        # until AWS 0.6.0
+        AWS.Logs
+      else
+        # since AWS 0.7.0
+        AWS.CloudWatchLogs
+      end
+
+    %{aws_log_module: log_module}
   end
 
   setup do
@@ -30,10 +41,10 @@ defmodule LogStreamNameTest do
     :ok
   end
 
-  test "creates a log stream when the log stream does not exist" do
+  test "creates a log stream when the log stream does not exist", %{aws_log_module: log_module} do
     log_stream_name = format_name(@stream_name_prefix, @stream_name_postfix)
 
-    with_mock AWS.Logs,
+    with_mock log_module,
       create_log_stream: fn _, _ -> {:ok, nil, nil} end,
       put_log_events: fn _, _ -> Cycler.next_response() end do
       Cycler.reset_responses([
@@ -45,14 +56,14 @@ defmodule LogStreamNameTest do
       :timer.sleep(100)
 
       assert called(
-               AWS.Logs.create_log_stream(:_, %{
+               log_module.create_log_stream(:_, %{
                  logGroupName: "testLogGroup",
                  logStreamName: log_stream_name
                })
              )
 
       assert called(
-               AWS.Logs.put_log_events(:_, %{
+               log_module.put_log_events(:_, %{
                  logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: log_stream_name,
@@ -62,10 +73,10 @@ defmodule LogStreamNameTest do
     end
   end
 
-  test "creates a log group and a log stream when the log group does not exist" do
+  test "creates a log group and a log stream when the log group does not exist", %{aws_log_module: log_module} do
     log_stream_name = format_name(@stream_name_prefix, @stream_name_postfix)
 
-    with_mock AWS.Logs,
+    with_mock log_module,
       create_log_group: fn _, _ -> {:ok, nil, nil} end,
       create_log_stream: fn _, _ -> {:ok, nil, nil} end,
       put_log_events: fn _, _ -> Cycler.next_response() end do
@@ -76,17 +87,17 @@ defmodule LogStreamNameTest do
 
       Logger.error("ArithmeticError")
       :timer.sleep(100)
-      assert called(AWS.Logs.create_log_group(:_, %{logGroupName: "testLogGroup"}))
+      assert called(log_module.create_log_group(:_, %{logGroupName: "testLogGroup"}))
 
       assert called(
-               AWS.Logs.create_log_stream(:_, %{
+               log_module.create_log_stream(:_, %{
                  logGroupName: "testLogGroup",
                  logStreamName: log_stream_name
                })
              )
 
       assert called(
-               AWS.Logs.put_log_events(:_, %{
+               log_module.put_log_events(:_, %{
                  logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: log_stream_name,

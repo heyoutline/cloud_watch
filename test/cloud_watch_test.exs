@@ -21,6 +21,16 @@ defmodule CloudWatchTest do
         log_stream_name: "testLogStream",
         max_buffer_size: 39
       )
+
+    log_module =
+      if Code.ensure_loaded?(AWS.Logs) do
+        # until AWS 0.6.0
+        AWS.Logs
+      else
+        AWS.CloudWatchLogs
+      end
+
+    %{aws_log_module: log_module}
   end
 
   setup do
@@ -28,8 +38,8 @@ defmodule CloudWatchTest do
     :ok
   end
 
-  test "creates a log stream when the log stream does not exist" do
-    with_mock AWS.Logs,
+  test "creates a log stream when the log stream does not exist", %{aws_log_module: log_module} = _context do
+    with_mock log_module,
       create_log_stream: fn _, _ -> {:ok, nil, nil} end,
       put_log_events: fn _, _ -> Cycler.next_response() end do
       Cycler.reset_responses([
@@ -41,14 +51,14 @@ defmodule CloudWatchTest do
       :timer.sleep(100)
 
       assert called(
-               AWS.Logs.create_log_stream(:_, %{
+               log_module.create_log_stream(:_, %{
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream"
                })
              )
 
       assert called(
-               AWS.Logs.put_log_events(:_, %{
+               log_module.put_log_events(:_, %{
                  logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
@@ -58,8 +68,8 @@ defmodule CloudWatchTest do
     end
   end
 
-  test "creates a log group and a log stream when the log group does not exist" do
-    with_mock AWS.Logs,
+  test "creates a log group and a log stream when the log group does not exist", %{aws_log_module: log_module} do
+    with_mock log_module,
       create_log_group: fn _, _ -> {:ok, nil, nil} end,
       create_log_stream: fn _, _ -> {:ok, nil, nil} end,
       put_log_events: fn _, _ -> Cycler.next_response() end do
@@ -70,17 +80,17 @@ defmodule CloudWatchTest do
 
       Logger.error("ArithmeticError")
       :timer.sleep(100)
-      assert called(AWS.Logs.create_log_group(:_, %{logGroupName: "testLogGroup"}))
+      assert called(log_module.create_log_group(:_, %{logGroupName: "testLogGroup"}))
 
       assert called(
-               AWS.Logs.create_log_stream(:_, %{
+               log_module.create_log_stream(:_, %{
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream"
                })
              )
 
       assert called(
-               AWS.Logs.put_log_events(:_, %{
+               log_module.put_log_events(:_, %{
                  logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
@@ -90,32 +100,34 @@ defmodule CloudWatchTest do
     end
   end
 
-  test "does not put log events that do not meet the log level" do
-    with_mock AWS.Logs,
+  test "does not put log events that do not meet the log level", %{aws_log_module: log_module} do
+    with_mock log_module,
       put_log_events: fn _, _ -> {:ok, %{"nextSequenceToken" => "5768239465"}, nil} end do
       Logger.debug("ArithmeticError")
       :timer.sleep(100)
-      refute called(AWS.Logs.put_log_events(:_, :_))
+      refute called(log_module.put_log_events(:_, :_))
     end
   end
 
-  test "does not put log events when the buffer size is less than the configured maximum buffer size" do
-    with_mock AWS.Logs,
+  test "does not put log events when the buffer size is less than the configured maximum buffer size", %{
+    aws_log_module: log_module
+  } do
+    with_mock log_module,
       put_log_events: fn _, _ -> {:ok, %{"nextSequenceToken" => "5768239465"}, nil} end do
       Logger.error("RuntimeError")
       :timer.sleep(100)
-      refute called(AWS.Logs.put_log_events(:_, :_))
+      refute called(log_module.put_log_events(:_, :_))
     end
   end
 
-  test "puts log events that meet the log level" do
-    with_mock AWS.Logs,
+  test "puts log events that meet the log level", %{aws_log_module: log_module} do
+    with_mock log_module,
       put_log_events: fn _, _ -> {:ok, %{"nextSequenceToken" => "5768239465"}, nil} end do
       Logger.info("ArgumentError")
       :timer.sleep(100)
 
       assert called(
-               AWS.Logs.put_log_events(:_, %{
+               log_module.put_log_events(:_, %{
                  logEvents: [%{message: "ArgumentError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
@@ -125,14 +137,16 @@ defmodule CloudWatchTest do
     end
   end
 
-  test "puts log events when the buffer size is greater then the configured maximum buffer size" do
-    with_mock AWS.Logs,
+  test "puts log events when the buffer size is greater then the configured maximum buffer size", %{
+    aws_log_module: log_module
+  } do
+    with_mock log_module,
       put_log_events: fn _, _ -> {:ok, %{"nextSequenceToken" => "5768239465"}, nil} end do
       Logger.error("ArithmeticError")
       :timer.sleep(100)
 
       assert called(
-               AWS.Logs.put_log_events(:_, %{
+               log_module.put_log_events(:_, %{
                  logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
@@ -142,8 +156,10 @@ defmodule CloudWatchTest do
     end
   end
 
-  test "puts log events with the next sequence token when the data has already been accepted" do
-    with_mock AWS.Logs, put_log_events: fn _, _ -> Cycler.next_response() end do
+  test "puts log events with the next sequence token when the data has already been accepted", %{
+    aws_log_module: log_module
+  } do
+    with_mock log_module, put_log_events: fn _, _ -> Cycler.next_response() end do
       Cycler.reset_responses([
         {:error,
          {"DataAlreadyAcceptedException",
@@ -155,7 +171,7 @@ defmodule CloudWatchTest do
       :timer.sleep(100)
 
       assert called(
-               AWS.Logs.put_log_events(:_, %{
+               log_module.put_log_events(:_, %{
                  logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
@@ -165,8 +181,8 @@ defmodule CloudWatchTest do
     end
   end
 
-  test "puts log events with the next sequence token when the sequence token was invalid" do
-    with_mock AWS.Logs, put_log_events: fn _, _ -> Cycler.next_response() end do
+  test "puts log events with the next sequence token when the sequence token was invalid", %{aws_log_module: log_module} do
+    with_mock log_module, put_log_events: fn _, _ -> Cycler.next_response() end do
       Cycler.reset_responses([
         {:error,
          {"InvalidSequenceTokenException",
@@ -178,7 +194,7 @@ defmodule CloudWatchTest do
       :timer.sleep(100)
 
       assert called(
-               AWS.Logs.put_log_events(:_, %{
+               log_module.put_log_events(:_, %{
                  logEvents: [%{message: "ArithmeticError", timestamp: :_}],
                  logGroupName: "testLogGroup",
                  logStreamName: "testLogStream",
