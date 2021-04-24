@@ -4,8 +4,8 @@ defmodule CloudWatch.Mixfile do
   def project do
     [
       app: :cloud_watch,
-      version: "0.3.2",
-      elixir: "~> 1.5",
+      version: "0.4.0",
+      elixir: "~> 1.6",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -20,6 +20,7 @@ defmodule CloudWatch.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     [applications: [:logger]]
+
   end
 
   # This makes sure your factory and any other modules in test/support are compiled
@@ -38,11 +39,11 @@ defmodule CloudWatch.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:aws, "~> 0.5.0", optional: true},
-      {:httpoison, "~> 0.11.1"},
-      {:credo, "~> 0.4.13", only: :dev},
-      {:mock, "~> 0.3.2", only: :test},
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:aws, "~> 0.5", optional: true},
+      {:httpoison, ">= 0.11.1"},
+      {:credo, "~> 1.4.0", only: :dev},
+      {:mock, "~> 0.3.5", only: :test},
+      {:ex_doc, "~> 0.22", only: :dev, runtime: false}
     ]
   end
 
