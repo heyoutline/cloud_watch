@@ -19,8 +19,13 @@ defmodule CloudWatch.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger]]
+    cond do
+      Code.ensure_loaded?(AWS) ->
+        [extra_applications: [:logger, :aws]]
 
+      Code.ensure_loaded?(ExAws) ->
+        [extra_applications: [:logger, :ex_aws]]
+    end
   end
 
   # This makes sure your factory and any other modules in test/support are compiled
