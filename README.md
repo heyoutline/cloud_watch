@@ -1,7 +1,7 @@
 <div align="right">
 
 GitHub build status:
-[![Elixir CI](https://github.com/lboekhorst/cloud_watch/actions/workflows/elixir.yml/badge.svg)](https://github.com/lboekhorst/cloud_watch/actions/workflows/elixir.yml)
+[![Elixir CI](https://github.com/heyoutline/cloud_watch/actions/workflows/elixir.yml/badge.svg)](https://github.com/heyoutline/cloud_watch/actions/workflows/elixir.yml)
 </div>
 
 # CloudWatch
