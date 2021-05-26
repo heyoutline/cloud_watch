@@ -1,13 +1,15 @@
-<div align="right">
-
-GitHub build status:
-[![Elixir CI](https://github.com/heyoutline/cloud_watch/actions/workflows/elixir.yml/badge.svg)](https://github.com/heyoutline/cloud_watch/actions/workflows/elixir.yml)
-</div>
-
 # CloudWatch
 
-`cloud_watch` is a logger backend for Elixir that puts log events on Amazon
-CloudWatch.
+[![GitHub Workflow Status](https://github.com/heyoutline/cloud_watch/actions/workflows/elixir.yml/badge.svg)](https://github.com/heyoutline/cloud_watch/actions/workflows/elixir.yml)
+[![hex.pm](https://img.shields.io/hexpm/v/cloud_watch.svg)](https://hex.pm/packages/cloud_watch)
+[![hex.pm](https://img.shields.io/hexpm/dt/cloud_watch.svg)](https://hex.pm/packages/cloud_watch)
+[![hex.pm](https://img.shields.io/hexpm/l/cloud_watch.svg)](https://hex.pm/packages/cloud_watch)
+[![hexdocs.pm](https://img.shields.io/badge/hexdocs-release-lightgreen.svg)](https://hexdocs.pm/cloud_watch)
+[![github.com](https://img.shields.io/github/last-commit/heyoutline/cloud_watch.svg)](https://github.com/heyoutline/cloud_watch/commits/master)
+
+
+`cloud_watch` is a logger backend for Elixir that emits log events to [Amazon
+CloudWatch](https://aws.amazon.com/cloudwatch/).
 
 ## Installation
 
