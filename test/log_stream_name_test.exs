@@ -12,7 +12,7 @@ defmodule LogStreamNameTest do
   use ExUnit.Case, async: false
 
   setup_all do
-    {:ok, _} = Cycler.start_link()
+    start_supervised(Cycler)
     Logger.add_backend(@backend)
 
     :ok =

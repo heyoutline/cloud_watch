@@ -10,7 +10,7 @@ defmodule CloudWatchTest do
   use ExUnit.Case, async: false
 
   setup_all do
-    {:ok, _} = Cycler.start_link()
+    start_supervised(Cycler)
     Logger.add_backend(@backend)
 
     :ok =
@@ -181,26 +181,53 @@ defmodule CloudWatchTest do
     end
   end
 
-  test "puts log events with the next sequence token when the sequence token was invalid", %{aws_log_module: log_module} do
-    with_mock log_module, put_log_events: fn _, _ -> Cycler.next_response() end do
-      Cycler.reset_responses([
-        {:error,
-         {"InvalidSequenceTokenException",
-          "The given sequenceToken is invalid. The next expected sequenceToken is: 5768239463"}},
-        {:ok, %{"nextSequenceToken" => "3857354916"}, nil}
-      ])
+  describe "puts log events with the next sequence token when the sequence token was invalid" do
+    test "with aws and ex_aws pre 2.2.4", %{aws_log_module: log_module} do
+      with_mock log_module, put_log_events: fn _, _ -> Cycler.next_response() end do
+        Cycler.reset_responses([
+          {:error,
+           {"InvalidSequenceTokenException",
+            "The given sequenceToken is invalid. The next expected sequenceToken is: 5768239463"}},
+          {:ok, %{"nextSequenceToken" => "3857354916"}, nil}
+        ])
 
-      Logger.error("ArithmeticError")
-      :timer.sleep(100)
+        Logger.error("ArithmeticError")
+        :timer.sleep(100)
 
-      assert called(
-               log_module.put_log_events(:_, %{
-                 logEvents: [%{message: "ArithmeticError", timestamp: :_}],
-                 logGroupName: "testLogGroup",
-                 logStreamName: "testLogStream",
-                 sequenceToken: "5768239463"
-               })
-             )
+        assert called(
+                 log_module.put_log_events(:_, %{
+                   logEvents: [%{message: "ArithmeticError", timestamp: :_}],
+                   logGroupName: "testLogGroup",
+                   logStreamName: "testLogStream",
+                   sequenceToken: "5768239463"
+                 })
+               )
+      end
+    end
+
+    test "with ex_aws after 2.2.4 when it returns next sequence token as third element in error reason tuple", %{
+      aws_log_module: log_module
+    } do
+      with_mock log_module, put_log_events: fn _, _ -> Cycler.next_response() end do
+        Cycler.reset_responses([
+          {:error,
+           {"InvalidSequenceTokenException",
+            "The given sequenceToken is invalid. The next expected sequenceToken is: 5768239463", "5768239463"}},
+          {:ok, %{"nextSequenceToken" => "3857354916"}, nil}
+        ])
+
+        Logger.error("ArithmeticError")
+        :timer.sleep(100)
+
+        assert called(
+                 log_module.put_log_events(:_, %{
+                   logEvents: [%{message: "ArithmeticError", timestamp: :_}],
+                   logGroupName: "testLogGroup",
+                   logStreamName: "testLogStream",
+                   sequenceToken: "5768239463"
+                 })
+               )
+      end
     end
   end
 end
