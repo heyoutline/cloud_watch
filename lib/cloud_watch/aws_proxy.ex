@@ -129,6 +129,10 @@ defmodule CloudWatch.AwsProxy do
           {:error, {:http_error, _error_code, %{"__type" => type, "message" => message}}} ->
             {:error, {type, message}}
 
+          {:error, {type, _message, _sequence_token}} = error
+          when type in ["DataAlreadyAcceptedException", "InvalidSequenceTokenException"] ->
+            error
+
           {:error, {type, message}} ->
             {:error, {type, message}}
         end

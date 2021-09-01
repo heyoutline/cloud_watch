@@ -1,4 +1,8 @@
 defmodule CloudWatch.Cycler do
+  def child_spec(_opts) do
+    %{id: __MODULE__, start: {__MODULE__, :start_link, []}}
+  end
+
   def start_link do
     Agent.start_link(fn -> %{index: 0, responses: []} end, name: __MODULE__)
   end

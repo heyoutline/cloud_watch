@@ -187,6 +187,12 @@ defmodule CloudWatch do
       {:ok, %{"nextSequenceToken" => next_sequence_token}, _} ->
         {:ok, state |> purge_buffer() |> Map.put(:sequence_token, next_sequence_token)}
 
+      {:error, {type, _message, next_sequence_token}}
+      when type in ["DataAlreadyAcceptedException", "InvalidSequenceTokenException"] ->
+        state
+        |> Map.put(:sequence_token, next_sequence_token)
+        |> do_flush(opts, log_group_name, log_stream_name)
+
       {:error,
        {"DataAlreadyAcceptedException",
         "The given batch of log events has already been accepted. The next batch can be sent with sequenceToken: " <>
