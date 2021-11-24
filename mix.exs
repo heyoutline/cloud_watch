@@ -45,6 +45,7 @@ defmodule CloudWatch.Mixfile do
   defp deps do
     [
       {:aws, "~> 0.5", optional: true},
+      {:ex_aws, "~> 2.2", optional: true},
       {:httpoison, ">= 0.11.1"},
       {:credo, "~> 1.4.0", only: :dev},
       {:mock, "~> 0.3.5", only: :test},
