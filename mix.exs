@@ -45,7 +45,11 @@ defmodule CloudWatch.Mixfile do
   defp deps do
     [
       {:aws, "~> 0.5", optional: true},
+      # Include mime for ex_aws; mime 2.x requires Elixir ~> 1.10
+      {:mime, "~> 1.2 or ~> 2.0", optional: true},
+      {:ex_aws, "~> 2.2", optional: true},
       {:httpoison, ">= 0.11.1"},
+      {:telemetry, "~> 0.4 or ~> 1.0"},
       {:credo, "~> 1.4.0", only: :dev},
       {:mock, "~> 0.3.5", only: :test},
       {:ex_doc, "~> 0.22", only: :dev, runtime: false}
