@@ -11,7 +11,8 @@ defmodule CloudWatch.Mixfile do
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Amazon CloudWatch-logger backend for Elixir",
-      package: package()
+      package: package(),
+      lockfile: lockfile()
     ]
   end
 
@@ -44,16 +45,25 @@ defmodule CloudWatch.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:aws, "~> 0.5", optional: true},
+      {:aws, "<= 0.7.0 or ~> 0.8", optional: true},
       # Include mime for ex_aws; mime 2.x requires Elixir ~> 1.10
-      {:mime, "~> 1.2 or ~> 2.0", optional: true},
+      {:mime, "<= 1.2.0 or ~> 2.0", optional: true},
       {:ex_aws, "~> 2.2", optional: true},
       {:httpoison, ">= 0.11.1"},
-      {:telemetry, "~> 0.4 or ~> 1.0"},
+      {:telemetry, "<= 0.4.3 or ~> 1.0"},
       {:credo, "~> 1.4.0", only: :dev},
       {:mock, "~> 0.3.5", only: :test},
       {:ex_doc, "~> 0.22", only: :dev, runtime: false}
     ]
+  end
+
+  defp lockfile do
+    cond do
+      Version.match?(System.version(), "< 1.10.0") ->
+        "mix_legacy.lock"
+      true ->
+        "mix.lock"
+    end
   end
 
   defp package do
